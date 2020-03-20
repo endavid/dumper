@@ -208,6 +208,19 @@ const UiUtils = {
     return $('<tr>').attr('id', `${id}_parent`).append(td);
   },
 
+  createColorPalette(id, values, callback) {
+    const td = $('<td>');
+    values.forEach((v, i) => {
+      const colorPicker = $('<input>')
+        .attr('id', `${id}.${i}`)
+        .attr('type', 'color')
+        .val(v)
+        .change(callback);
+      td.append(colorPicker);
+    });
+    return $('<tr>').attr('id', `${id}_parent`).append(td);
+  },
+
   createTextInput(id, text, value, callback) {
     const textInput = $('<input>')
       .attr('id', id)

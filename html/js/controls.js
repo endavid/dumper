@@ -55,10 +55,26 @@ function populateControls() {
     }
   }
 
+  function onChangeColorPalette(e) {
+    console.log(e);
+  }
+
   // Create the UI controls
   // * File
   UiUtils.addGroup('gFile', 'File', [
     UiUtils.createFileBrowser('fileBrowser', 'load PNGs', true, onChangeFileBrowser),
+  ]);
+  UiUtils.addGroup('gPalette', 'Palette', [
+    UiUtils.createColorPalette('colorPalette', [
+      '#ff0000',
+      '#00ff00',
+      '#0000ff',
+      '#ffffff',
+      '#ff00ff',
+      '#00ffff',
+      '#aaff22',
+      '#a0b080',
+    ], onChangeColorPalette),
   ]);
 }
 
