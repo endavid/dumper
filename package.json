@@ -1,0 +1,14 @@
+{
+  "name": "dumper",
+  "version": "0.0.1",
+  "description": "Reads pixels from images",
+  "author": "David Gavilan",
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.3.0"
+  },
+  "dependencies": {
+    "npm": "^6.5.0"
+  }
+}
