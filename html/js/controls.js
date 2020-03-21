@@ -32,7 +32,6 @@ function progressBarUpdate(ratio) {
   $('#progressBar').css('width', `${percentage}%`);
 }
 
-
 let colorPalette = new ColorPalette([
   '#000000',
   '#c0c0c0',
@@ -64,20 +63,22 @@ function dumpCanvas(dc) {
   const numColumns = array.length / height;
   let rows = [];
   for (let y = 0; y < height; y++) {
-    const row = array.slice(numColumns * y, numColumns * (y+1));
+    let row = array.slice(numColumns * y, numColumns * (y+1));
+    row = row.map(v => '0x' + v.toString(16));
     rows.push(row.join(", "));
   }
   $('#textarea').html(rows.join(',\n'));
 }
 
 function populateControls() {
+  let dumperCanvasList = [];
   function onChangeFileBrowser(values) {
+    const scale = parseInt($('#canvasScale').val());
     for (let i = 0; i < values.length; i += 1) {
-      console.log(`${values[i].name}, uri: ${values[i].uri}`);
-      DumperCanvas.createAsync(values[i]).then((dc) => {
-        console.log(dc.png);
+      DumperCanvas.createAsync(values[i], scale).then((dc) => {
         dc.canvas.onclick = dumpCanvas.bind(null, dc);
         $('#canvases').append(dc.canvas);
+        dumperCanvasList.push(dc);
       });
     }
   }
@@ -99,7 +100,10 @@ function populateControls() {
   const filterPresets = Object.keys(DumpFunctions).map((k) => {
     return {name: k, value: k};
   });
-  UiUtils.addGroup('gFilters', 'Filters', [
+  UiUtils.addGroup('gCanvas', 'Canvas', [
+    UiUtils.createSlider('canvasScale', 'scale', 1, 1, 10, 1, (s) => {
+      dumperCanvasList.forEach(dc => dc.setScale(s));
+    }),
     UiUtils.createDropdownList('filterFn', filterPresets, (a) => {
       selectedDumpFn = a.value;
     }),

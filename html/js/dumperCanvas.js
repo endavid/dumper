@@ -21,7 +21,6 @@ function getArrayBuffer(url) {
   return new Promise((resolve, reject) => {
     xhr.onload = () => {
       if (xhr.status === 200) {
-        console.log(xhr.response);
         resolve(xhr.response);
       } else {
         reject(new Error(xhr.status));
@@ -32,32 +31,47 @@ function getArrayBuffer(url) {
 }
 
 class DumperCanvas {
-  constructor(name, png) {
+  constructor(name, png, scale) {
     this.png = png;
     const canvas = document.createElement('canvas');
     canvas.setAttribute('id', name);
-    canvas.width = png.width;
-    canvas.height = png.height;
     this.canvas = canvas;
-    this.applyFilter(a => a); // apply identity
+    this.setScale(scale);
   }
 
-  static async createAsync(element) {
+  static async createAsync(element, scale = 1) {
     const imgData = await getArrayBuffer(element.uri);
     const png = await parsePng(imgData);
-    return new DumperCanvas(element.name, png);
+    return new DumperCanvas(element.name, png, scale);
+  }
+
+  setScale(s) {
+    this.scale = s;
+    this.canvas.width = this.png.width * s;
+    this.canvas.height = this.png.height * s;
+    this.applyFilter(a => a); // apply identity
   }
 
   applyFilter(fn) {
     const {width, height, pixels, colors} = this.png;
-    const n = width * height;
-    const outArray = new Uint8ClampedArray(n * 4);
-    for (let i = 0; i < n; i++) {
-      const c = pixels.slice(colors*i, colors*(i+1));
-      outArray.set([255, 255, 255, 255], 4*i);
-      outArray.set(fn(c), 4*i);
+    const s = this.scale;
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+    const outArray = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        const inIndex = i * width + j;
+        const c = pixels.slice(colors*inIndex, colors*(inIndex+1));
+        for (let y = 0; y < s; y++) {
+          for (let x = 0; x < s; x++) {
+            const index = 4 * ((i * s + y) * w + j * s + x);
+            outArray.set([255, 255, 255, 255], index);
+            outArray.set(fn(c), index);
+          }
+        }
+      }
     }
-    const imgData = new ImageData(outArray, width, height);
+    const imgData = new ImageData(outArray, this.canvas.width, this.canvas.height);
     const ctx = this.canvas.getContext('2d');
     ctx.putImageData(imgData, 0, 0);
   }
