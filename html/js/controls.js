@@ -51,7 +51,6 @@ function progressBarUpdate(ratio) {
 let colorPalette = new ColorPalette([
   '#000000',
   '#c0c0c0',
-  '#404040',
   '#ffffff',
   '#ff0000',
   '#ff8000',
@@ -61,6 +60,7 @@ let colorPalette = new ColorPalette([
   '#40ffff',
   '#4040ff',
   '#ff40ff',
+  '#9e3be2',
 ]);
 
 const DumpFunctions = {
@@ -74,13 +74,22 @@ let selectedDumpFn = 'identity';
 
 const Dumpers = {
   canvas: (dc) => {
+    const decorators = {
+      identity: (row) => row.map(v => '0x' + v.toString(16)),
+      palette: (row) => {
+        return row.map(i => {
+          const c = colorPalette.palette[i];
+          return `<span style='background-color: ${c}'>0x${i.toString(16)}</span>`;
+        });
+      }
+    }
     const {height} = dc.png;
     const array = dc.asArray(DumpFunctions[selectedDumpFn]);
     const numColumns = array.length / height;
     let rows = [];
     for (let y = 0; y < height; y++) {
       let row = array.slice(numColumns * y, numColumns * (y+1));
-      row = row.map(v => '0x' + v.toString(16));
+      row = decorators[selectedDumpFn](row);
       rows.push(row.join(", "));
     }
     $('#textarea').html(rows.join(',\n'));
