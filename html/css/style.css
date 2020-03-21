@@ -344,3 +344,12 @@ pre {
 #textarea {
   width: 100%;
 }
+
+span[class="key"] {
+  font-weight: 600;
+}
+
+span[class="rootkey"] {
+  font-weight: 600;
+  color: #80e080;
+}

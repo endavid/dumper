@@ -1,3 +1,9 @@
+function round(v, numDigits) {
+  const p = numDigits || 6;
+  const c = 10 ** p;
+  return Math.round(v * c) / c;
+}
+
 const VMath = {
   sum(a, b) {
     const out = [];
@@ -24,6 +30,12 @@ const VMath = {
   },
   distance(a, b) {
     return Math.sqrt(VMath.distanceSqr(a, b));
+  },
+  round(v, numDigits) {
+    if (Array.isArray(v)) {
+      return v.map(a => round(a, numDigits));
+    }
+    return round(v, numDigits);
   },
   vectorToHexColor: (v) => {
     // can't use 'map' because it returns another Float32Array...

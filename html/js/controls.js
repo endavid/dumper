@@ -16,15 +16,31 @@ function setError(e) {
   setInfo(`[ERROR] ${e}`);
 }
 
+function preseterize(obj) {
+  return Object.keys(obj).map((k) => {
+    return {name: k, value: k};
+  });
+}
+
 function clearFileBrowser(id) {
   // https://stackoverflow.com/a/832730
   $(`#${id}`).replaceWith($(`#${id}`).val('').clone(true));
 }
 
-function dumpObject(obj) {
+function objectToHtml(obj, depth = 0) {
+  if (Array.isArray(obj)) {
+    return `[${obj.map(a => objectToHtml(a, depth+1)).join(", ")}]`;
+  }
   const keys = Object.keys(obj);
-  const lines = keys.map(k => `${k}: ${obj[k]}`);
-  setInfo(lines.join(', '));
+  if (keys.length === 0) {
+    return obj.toString();
+  }
+  const st = depth === 0 ? 'rootkey' : 'key';
+  const lines = keys.map(k => `<span class="${st}">${k}</span>: ${objectToHtml(obj[k], depth+1)}`);
+  if (depth === 0) {
+    return lines.join(',\n');
+  }
+  return `{${lines.join(", ")}}`;
 }
 
 function progressBarUpdate(ratio) {
@@ -54,21 +70,35 @@ const DumpFunctions = {
     return colorPalette.findClosest(v);
   }
 }
-
 let selectedDumpFn = 'identity';
 
-function dumpCanvas(dc) {
-  const {height} = dc.png;
-  const array = dc.asArray(DumpFunctions[selectedDumpFn]);
-  const numColumns = array.length / height;
-  let rows = [];
-  for (let y = 0; y < height; y++) {
-    let row = array.slice(numColumns * y, numColumns * (y+1));
-    row = row.map(v => '0x' + v.toString(16));
-    rows.push(row.join(", "));
+const Dumpers = {
+  canvas: (dc) => {
+    const {height} = dc.png;
+    const array = dc.asArray(DumpFunctions[selectedDumpFn]);
+    const numColumns = array.length / height;
+    let rows = [];
+    for (let y = 0; y < height; y++) {
+      let row = array.slice(numColumns * y, numColumns * (y+1));
+      row = row.map(v => '0x' + v.toString(16));
+      rows.push(row.join(", "));
+    }
+    $('#textarea').html(rows.join(',\n'));
+  },
+  pixel: (dc, e) => {
+    const p = dc.getMousePosition(e);
+    const info = {
+      'coordinates': p
+    };
+    const c = dc.getPixel(p);
+    Object.keys(DumpFunctions).forEach((k) => {
+      info[k] = DumpFunctions[k](c);
+    })
+    $('#textarea').html(objectToHtml(info));
   }
-  $('#textarea').html(rows.join(',\n'));
 }
+let selectedDumper = 'canvas';
+
 
 function populateControls() {
   let dumperCanvasList = [];
@@ -76,7 +106,9 @@ function populateControls() {
     const scale = parseInt($('#canvasScale').val());
     for (let i = 0; i < values.length; i += 1) {
       DumperCanvas.createAsync(values[i], scale).then((dc) => {
-        dc.canvas.onclick = dumpCanvas.bind(null, dc);
+        dc.canvas.onclick = (e) => {
+          Dumpers[selectedDumper](dc, e);
+        };
         $('#canvases').append(dc.canvas);
         dumperCanvasList.push(dc);
       });
@@ -97,14 +129,14 @@ function populateControls() {
   UiUtils.addGroup('gPalette', 'Palette', [
     UiUtils.createColorPalette('colorPalette', colorPalette.palette, onChangeColorPalette),
   ]);
-  const filterPresets = Object.keys(DumpFunctions).map((k) => {
-    return {name: k, value: k};
-  });
   UiUtils.addGroup('gCanvas', 'Canvas', [
+    UiUtils.createDropdownList('dumpMode', preseterize(Dumpers), (a) => {
+      selectedDumper = a.value;
+    }),
     UiUtils.createSlider('canvasScale', 'scale', 1, 1, 10, 1, (s) => {
       dumperCanvasList.forEach(dc => dc.setScale(s));
     }),
-    UiUtils.createDropdownList('filterFn', filterPresets, (a) => {
+    UiUtils.createDropdownList('filterFn', preseterize(DumpFunctions), (a) => {
       selectedDumpFn = a.value;
     }),
   ]);

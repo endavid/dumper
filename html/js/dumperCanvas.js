@@ -1,3 +1,5 @@
+import VMath from './math.js';
+
 // Unfortunately, I wasn't able to import pngreader as a module
 const { PNGReader } = window;
 
@@ -45,6 +47,13 @@ class DumperCanvas {
     return new DumperCanvas(element.name, png, scale);
   }
 
+  getPixel(p) {
+    const {width, pixels, colors} = this.png;
+    const i = p.y * width + p.x;
+    const c = pixels.slice(colors * i, colors * (i+1));
+    return Array.prototype.slice.call(c);
+  }
+
   setScale(s) {
     this.scale = s;
     this.canvas.width = this.png.width * s;
@@ -86,6 +95,21 @@ class DumperCanvas {
       out = out.concat(filter(c));
     }
     return out;
+  }
+
+  // https://stackoverflow.com/a/17130415/1765629
+  getMousePosition(evt) {
+    const rect = this.canvas.getBoundingClientRect();
+    const sx = evt.clientX - rect.left;
+    const sy = evt.clientY - rect.top;
+    const x = Math.floor(sx / this.scale);
+    const y = Math.floor(sy / this.scale);
+    // normalized coordinates
+    const u = VMath.round(x / this.png.width, 6);
+    const v = VMath.round(1 - y / this.png.height, 6);
+    return {
+      sx, sy, x, y, u, v
+    };
   }
 
 }
