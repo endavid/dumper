@@ -61,6 +61,10 @@ let colorPalette = new ColorPalette([
   '#4040ff',
   '#ff40ff',
   '#9e3be2',
+  '#5f8be2',
+  '#677f58',
+  '#c57f58',
+  '#c5dd58'
 ]);
 
 const DumpFunctions = {
@@ -131,6 +135,18 @@ function populateControls() {
     colorPalette.setColor(index, value);
   }
 
+  function copyTextArea(e) {
+    // e.clipboardData is initially empty, but we can set it to the
+    // data that we want copied onto the clipboard.
+    e.clipboardData.setData('text/plain', $('#textarea').text());
+    //e.clipboardData.setData('text/html', $('#textarea').html());
+    // This is necessary to prevent the current document selection from
+    // being written to the clipboard.
+    e.preventDefault();
+    // remove itself, so we don't intercept anymore
+    document.removeEventListener('copy', copyTextArea);
+  }
+
   // Create the UI controls
   // * File
   UiUtils.addGroup('gFile', 'File', [
@@ -149,9 +165,16 @@ function populateControls() {
     UiUtils.createDropdownList('filterFn', preseterize(DumpFunctions), (a) => {
       selectedDumpFn = a.value;
     }),
+    UiUtils.createButton('buttonCopy', 'Copy to clipboard', () => {
+      // Overwrite what is being copied to the clipboard.
+      document.addEventListener('copy', copyTextArea);
+      document.execCommand("copy");
+    }),
   ]);
+
 }
 
 $(document).ready(() => {
   populateControls();
+
 });

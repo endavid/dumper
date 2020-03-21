@@ -301,6 +301,12 @@ input[type=range] {
 input.three[type=range] {
   width: 72px;
 }
+input[type=color] {
+  width: 35px;
+  height: 23px;
+  padding: 1px;
+  cursor: pointer;
+}
 
 .container {
   position: relative;
