@@ -113,6 +113,7 @@ function populateControls() {
         dumperCanvasList.push(dc);
       });
     }
+    setInfo(`Loaded: ${values.map(a => a.name).join(', ')}`);
   }
 
   function onChangeColorPalette(e) {
