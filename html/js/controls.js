@@ -1,6 +1,7 @@
 import $ from './jquery.module.js';
 import UiUtils from './uiutils.js';
 import DumperCanvas from './dumperCanvas.js';
+import ColorPalette from './colorPalette.js';
 
 function setInfo(text) {
   $('#infoDiv').text(text);
@@ -26,21 +27,47 @@ function dumpObject(obj) {
   setInfo(lines.join(', '));
 }
 
-function dumpCanvas(dc) {
-  const {width, height, colors} = dc.png;
-  const wc = width * colors;
-  const array = dc.asArray(a => a);
-  let rows = [];
-  for (let y = 0; y < height; y++) {
-    const row = array.slice(wc * y, wc * (y+1));
-    rows.push(row.join(", "));
-  }
-  $('#textarea').html(rows.join(',\n'));
-}
-
 function progressBarUpdate(ratio) {
   const percentage = Math.round(100 * ratio);
   $('#progressBar').css('width', `${percentage}%`);
+}
+
+
+let colorPalette = new ColorPalette([
+  '#000000',
+  '#c0c0c0',
+  '#404040',
+  '#ffffff',
+  '#ff0000',
+  '#ff8000',
+  '#ffff00',
+  '#008000',
+  '#00ff00',
+  '#40ffff',
+  '#4040ff',
+  '#ff40ff',
+]);
+
+const DumpFunctions = {
+  identity: c => c,
+  palette: c => {
+    const v = c.map(a => a / 255);
+    return colorPalette.findClosest(v);
+  }
+}
+
+let selectedDumpFn = 'identity';
+
+function dumpCanvas(dc) {
+  const {height} = dc.png;
+  const array = dc.asArray(DumpFunctions[selectedDumpFn]);
+  const numColumns = array.length / height;
+  let rows = [];
+  for (let y = 0; y < height; y++) {
+    const row = array.slice(numColumns * y, numColumns * (y+1));
+    rows.push(row.join(", "));
+  }
+  $('#textarea').html(rows.join(',\n'));
 }
 
 function populateControls() {
@@ -56,7 +83,9 @@ function populateControls() {
   }
 
   function onChangeColorPalette(e) {
-    console.log(e);
+    const {id, value} = e.target;
+    const index = parseInt(id.split('.')[1])
+    colorPalette.setColor(index, value);
   }
 
   // Create the UI controls
@@ -65,16 +94,15 @@ function populateControls() {
     UiUtils.createFileBrowser('fileBrowser', 'load PNGs', true, onChangeFileBrowser),
   ]);
   UiUtils.addGroup('gPalette', 'Palette', [
-    UiUtils.createColorPalette('colorPalette', [
-      '#ff0000',
-      '#00ff00',
-      '#0000ff',
-      '#ffffff',
-      '#ff00ff',
-      '#00ffff',
-      '#aaff22',
-      '#a0b080',
-    ], onChangeColorPalette),
+    UiUtils.createColorPalette('colorPalette', colorPalette.palette, onChangeColorPalette),
+  ]);
+  const filterPresets = Object.keys(DumpFunctions).map((k) => {
+    return {name: k, value: k};
+  });
+  UiUtils.addGroup('gFilters', 'Filters', [
+    UiUtils.createDropdownList('filterFn', filterPresets, (a) => {
+      selectedDumpFn = a.value;
+    }),
   ]);
 }
 

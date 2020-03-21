@@ -67,9 +67,9 @@ class DumperCanvas {
     const n = width * height;
     let out = [];
     for (let i = 0; i < n; i++) {
-      const c = pixels.slice(colors*i, colors*(i+1));
-      const elements = Array.prototype.slice.call(filter(c));
-      out = out.concat(elements);
+      let c = pixels.slice(colors*i, colors*(i+1));
+      c = Array.prototype.slice.call(c);
+      out = out.concat(filter(c));
     }
     return out;
   }
